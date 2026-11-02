@@ -4,20 +4,14 @@ project(shelfdb LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# MSVC reads sources in the local code page by default; force UTF-8
-if(MSVC)
-    add_compile_options(/utf-8)
-endif()
-
-# Core library: storage and indexes, no Qt dependency
 add_library(shelf_core STATIC
-    core/RecordCodec.cpp
+        core/Book.cpp
 )
 target_include_directories(shelf_core PUBLIC core)
 
-# Tests
+# Тесты
 enable_testing()
 
-add_executable(codec_test tests/codec_test.cpp)
-target_link_libraries(codec_test PRIVATE shelf_core)
-add_test(NAME codec_test COMMAND codec_test)
+add_executable(book_test tests/book_test.cpp)
+target_link_libraries(book_test PRIVATE shelf_core)
+add_test(NAME book_test COMMAND book_test)
