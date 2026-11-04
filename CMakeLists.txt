@@ -10,6 +10,7 @@ add_library(shelf_core STATIC
 		core/HashIndex.cpp
 		core/Database.cpp
 		core/BookField.cpp
+		core/Backup.cpp
 )
 target_include_directories(shelf_core PUBLIC core)
 
