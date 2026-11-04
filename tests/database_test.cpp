@@ -77,6 +77,7 @@ int main() {
 
     std::remove((base + ".dat").c_str());
     std::remove((base + ".pidx").c_str());
+    std::remove((base + ".sidx").c_str());
 
     if (failures == 0) {
         std::cout << "database_test: все проверки пройдены" << std::endl;
