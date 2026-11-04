@@ -70,9 +70,15 @@ int main() {
     check(db.isOpen() && db.count() == 2, "база не пострадала");
     check(!Backup::restore(db, (dir / "nothing").string()), "несуществующая папка отклонена");
 
+    // 5. База удалена — восстанавливаем её из копии на прежнее место.
+    check(db.destroy(), "удаление базы");
+    check(!Backup::restore(db, backup), "restore без открытой базы возвращает false");
+    check(Backup::restoreTo(db, backup, base), "восстановление удалённой базы");
+    check(db.isOpen() && db.count() == 2 && db.findById(1, found), "удалённая база восстановлена");
+
     // ---------- экспорт ----------
 
-    // 5. CSV.
+    // 6. CSV.
     std::string csvPath = (dir / "books.csv").string();
     check(Exporter::toCsv(db, csvPath), "экспорт в CSV");
     std::string csv = readAll(csvPath);
@@ -81,7 +87,7 @@ int main() {
     check(csv.find("1;\"Война и мир\";\"Толстой\";1869;500.00;да") != std::string::npos, "строка CSV");
     check(csv.find("\"Анна \"\"Каренина\"\"\"") != std::string::npos, "кавычки в CSV удвоены");
 
-    // 6. XLSX: это zip-архив с листом, в котором есть наши данные.
+    // 7. XLSX: это zip-архив с листом, в котором есть наши данные.
     std::string xlsxPath = (dir / "books.xlsx").string();
     check(Exporter::toXlsx(db, xlsxPath), "экспорт в xlsx");
     std::string xlsx = readAll(xlsxPath);

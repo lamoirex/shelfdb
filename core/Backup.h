@@ -20,4 +20,8 @@ std::string create(Database& db);
 // Если копия повреждена, база остаётся в прежнем состоянии.
 bool restore(Database& db, const std::string& backupFolder);
 
+// Восстанавливает копию в базу по пути basePath (без расширения) и открывает её в db.
+// Подходит и для случая, когда исходная база уже удалена.
+bool restoreTo(Database& db, const std::string& backupFolder, const std::string& basePath);
+
 }  // namespace Backup

@@ -46,8 +46,10 @@ std::string create(Database& db) {
 
 bool restore(Database& db, const std::string& backupFolder) {
     if (!db.isOpen()) return false;
-    std::string base = db.basePath();
+    return restoreTo(db, backupFolder, db.basePath());
+}
 
+bool restoreTo(Database& db, const std::string& backupFolder, const std::string& basePath) {
     // Ищем в папке копии файл .dat — по нему узнаём имя базы в копии.
     std::error_code error;
     fs::path backupBase;
@@ -65,16 +67,16 @@ bool restore(Database& db, const std::string& backupFolder) {
     if (!check.open(backupBase.string())) return false;
     check.close();
 
-    // Закрываем базу, заменяем её файлы файлами копии и открываем снова.
+    // Закрываем базу, кладём на её место файлы копии и открываем.
     db.close();
     std::vector<std::string> from = Database::filesOf(backupBase.string());
-    std::vector<std::string> to = Database::filesOf(base);
+    std::vector<std::string> to = Database::filesOf(basePath);
     bool ok = true;
     for (size_t i = 0; i < from.size(); i++) {
         fs::copy_file(from[i], to[i], fs::copy_options::overwrite_existing, error);
         if (error) ok = false;
     }
-    return db.open(base) && ok;
+    return db.open(basePath) && ok;
 }
 
 }  // namespace Backup
