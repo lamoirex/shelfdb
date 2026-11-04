@@ -50,9 +50,12 @@ add_test(NAME services_test COMMAND services_test)
 add_executable(benchmark bench/benchmark.cpp)
 target_link_libraries(benchmark PRIVATE shelf_core)
 
+# Демонстрационная база с книгами
+add_executable(make_sample_db tools/make_sample_db.cpp)
+target_link_libraries(make_sample_db PRIVATE shelf_core)
+
 # Графический интерфейс (Qt 6)
 if(APPLE)
-	# Где Homebrew хранит Qt (Apple Silicon и Intel)
 	list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew/opt/qt" "/usr/local/opt/qt")
 endif()
 
