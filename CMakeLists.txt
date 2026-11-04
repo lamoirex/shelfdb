@@ -21,3 +21,7 @@ add_test(NAME book_test COMMAND book_test)
 add_executable(datafile_test tests/datafile_test.cpp)
 target_link_libraries(datafile_test PRIVATE shelf_core)
 add_test(NAME datafile_test COMMAND datafile_test)
+
+add_executable(hashindex_test tests/hashindex_test.cpp)
+target_link_libraries(hashindex_test PRIVATE shelf_core)
+add_test(NAME hashindex_test COMMAND hashindex_test)
