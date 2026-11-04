@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(shelf_core STATIC
-        core/Book.cpp
+		core/Book.cpp
 		core/DataFile.cpp
 		core/HashIndex.cpp
 		core/Database.cpp
@@ -46,3 +46,21 @@ add_test(NAME lifecycle_test COMMAND lifecycle_test)
 add_executable(services_test tests/services_test.cpp)
 target_link_libraries(services_test PRIVATE shelf_core)
 add_test(NAME services_test COMMAND services_test)
+# Графический интерфейс (Qt 6)
+if(APPLE)
+	# Где Homebrew хранит Qt (Apple Silicon и Intel)
+	list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew/opt/qt" "/usr/local/opt/qt")
+endif()
+
+find_package(Qt6 COMPONENTS Widgets)
+if(Qt6_FOUND)
+	add_executable(shelfdb
+			gui/main.cpp
+			gui/MainWindow.cpp
+			gui/BookDialog.cpp
+			gui/FieldValueDialog.cpp
+	)
+	target_link_libraries(shelfdb PRIVATE shelf_core Qt6::Widgets)
+else()
+	message(WARNING "Qt6 не найден, GUI не будет собран")
+endif()
