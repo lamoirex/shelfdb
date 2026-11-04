@@ -30,7 +30,7 @@ std::string formatPrice(double price) {
     return buf;
 }
 
-}  // namespace
+}
 
 namespace Exporter {
 

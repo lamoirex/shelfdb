@@ -10,7 +10,6 @@ namespace {
 const char MAGIC[4] = {'S', 'H', 'I', 'X'};
 }
 
-// ---------- открытие и закрытие ----------
 
 bool HashIndex::create(const std::string& filePath, int keyLen, int64_t capacity) {
     close();
@@ -26,7 +25,6 @@ bool HashIndex::create(const std::string& filePath, int keyLen, int64_t capacity
     header.deleted = 0;
     writeHeader();
 
-    // Заполняем все ячейки нулями, то есть делаем их пустыми (EMPTY = 0).
     std::vector<char> zeros(cellSize() * 1024, 0);
     int64_t left = capacity;
     while (left > 0) {
@@ -69,8 +67,6 @@ void HashIndex::flush() {
     file.flush();
 }
 
-// ---------- работа с ячейками в файле ----------
-
 int64_t HashIndex::cellSize() const {
     return 1 + header.keyLen + 8;
 }
@@ -103,8 +99,6 @@ void HashIndex::writeHeader() {
     file.write((const char*)&header, sizeof(IndexHeader));
 }
 
-// ---------- хеш-функция ----------
-
 // FNV-1a: простая и хорошо перемешивающая хеш-функция.
 // Для каждого байта: hash ^= байт; hash *= простое число.
 uint64_t HashIndex::hashOf(const std::string& key) {
@@ -116,21 +110,15 @@ uint64_t HashIndex::hashOf(const std::string& key) {
     return hash;
 }
 
-// Ключ хранится в поле фиксированной длины, поэтому слишком длинный
-// ключ обрезается так же, как он обрежется при записи в ячейку.
 std::string HashIndex::fitKey(const std::string& key) const {
     char buf[256];
     setText(buf, header.keyLen, key);
     return getText(buf, header.keyLen);
 }
 
-// ---------- основные операции ----------
-
 int64_t HashIndex::findCell(const std::string& key) {
     int64_t i = hashOf(key) % header.capacity;
 
-    // Идём по ячейкам, пока не встретим пустую: дальше ключа точно нет.
-    // Надгробия пропускаем — за ними может лежать нужный ключ.
     for (int64_t step = 0; step < header.capacity; step++) {
         Cell cell = readCell(i);
         if (cell.state == EMPTY) return -1;
@@ -150,7 +138,6 @@ int64_t HashIndex::find(const std::string& rawKey) {
 void HashIndex::put(const std::string& rawKey, int64_t value) {
     std::string key = fitKey(rawKey);
 
-    // Ключ уже есть — просто меняем значение.
     int64_t existing = findCell(key);
     if (existing != -1) {
         Cell cell = readCell(existing);
@@ -159,7 +146,6 @@ void HashIndex::put(const std::string& rawKey, int64_t value) {
         return;
     }
 
-    // Ключа нет — кладём в первую пустую ячейку или на место надгробия.
     int64_t i = hashOf(key) % header.capacity;
     Cell cell = readCell(i);
     while (cell.state == USED) {
@@ -172,7 +158,6 @@ void HashIndex::put(const std::string& rawKey, int64_t value) {
     writeCell(i, Cell{USED, key, value});
     writeHeader();
 
-    // Заполнено больше 70% (надгробия тоже мешают поиску) — расширяемся.
     if ((header.used + header.deleted) * 10 > header.capacity * 7) {
         grow();
     }
@@ -183,8 +168,6 @@ bool HashIndex::remove(const std::string& rawKey) {
     int64_t i = findCell(key);
     if (i == -1) return false;
 
-    // Ставим надгробие, а не EMPTY: иначе поиск остановится на этой ячейке
-    // и не найдёт ключи, которые при вставке "проехали" дальше неё.
     writeCell(i, Cell{DELETED, "", -1});
     header.used--;
     header.deleted++;
@@ -192,9 +175,6 @@ bool HashIndex::remove(const std::string& rawKey) {
     return true;
 }
 
-// Перестройка: создаём рядом новый файл вдвое больше, переносим туда
-// все живые ключи по одному (надгробия выбрасываем) и подменяем старый файл.
-// Таблица не загружается в память целиком — ячейки читаются по одной.
 void HashIndex::grow() {
     std::string tmpPath = path + ".tmp";
 

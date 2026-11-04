@@ -6,7 +6,7 @@
 
 namespace {
 
-// ---------- CRC-32: контрольная сумма, которую требует формат zip ----------
+//CRC-32: контрольная сумма, которую требует формат zip
 
 uint32_t crc32(const std::string& data) {
     uint32_t crc = 0xFFFFFFFF;
@@ -34,8 +34,6 @@ struct ZipEntry {
     std::string data;
 };
 
-// Собирает zip-архив без сжатия.
-// Устройство: [заголовок файла + данные] ... [оглавление] [конец оглавления].
 std::string buildZip(const std::vector<ZipEntry>& entries) {
     std::string zip;
     std::string directory;
@@ -45,7 +43,6 @@ std::string buildZip(const std::vector<ZipEntry>& entries) {
         uint32_t crc = crc32(e.data);
         uint32_t size = (uint32_t)e.data.size();
 
-        // Локальный заголовок файла.
         put32(zip, 0x04034b50);
         put16(zip, 20);          // нужна версия zip 2.0
         put16(zip, 0x0800);      // имена в UTF-8
@@ -84,7 +81,6 @@ std::string buildZip(const std::vector<ZipEntry>& entries) {
     uint32_t directoryOffset = (uint32_t)zip.size();
     zip += directory;
 
-    // Конец оглавления.
     put32(zip, 0x06054b50);
     put16(zip, 0);
     put16(zip, 0);
@@ -126,7 +122,6 @@ const char* WORKBOOK_RELS =
     "<Relationship Id=\"rId2\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles\" Target=\"styles.xml\"/>"
     "</Relationships>";
 
-// Два стиля ячеек: 0 — обычный, 1 — жирный (для заголовка).
 const char* STYLES =
     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
     "<styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"
@@ -141,9 +136,8 @@ const char* STYLES =
     "<cellStyles count=\"1\"><cellStyle name=\"Normal\" xfId=\"0\" builtinId=\"0\"/></cellStyles>"
     "</styleSheet>";
 
-}  // namespace
+}
 
-// ---------- ячейки ----------
 
 std::string XlsxWriter::escapeXml(const std::string& text) {
     std::string out;
@@ -207,7 +201,6 @@ void XlsxWriter::endRow() {
     rowOpen = false;
 }
 
-// ---------- сохранение ----------
 
 bool XlsxWriter::save(const std::string& path) {
     endRow();

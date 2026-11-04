@@ -15,7 +15,7 @@ std::string timestamp() {
     return buf;
 }
 
-}  // namespace
+}
 
 namespace Backup {
 
@@ -27,7 +27,6 @@ std::string create(Database& db) {
     fs::path folder = base.parent_path() / "backups" /
                       (base.filename().string() + "_" + timestamp());
 
-    // Если за одну секунду сделали две копии, добавляем номер.
     fs::path unique = folder;
     for (int n = 2; fs::exists(unique); n++) {
         unique = folder.string() + "_" + std::to_string(n);
@@ -62,7 +61,6 @@ bool restoreTo(Database& db, const std::string& backupFolder, const std::string&
     }
     if (backupBase.empty()) return false;
 
-    // Сначала проверяем, что копия открывается: битую копию не восстанавливаем.
     Database check;
     if (!check.open(backupBase.string())) return false;
     check.close();
@@ -79,4 +77,4 @@ bool restoreTo(Database& db, const std::string& backupFolder, const std::string&
     return db.open(basePath) && ok;
 }
 
-}  // namespace Backup
+}

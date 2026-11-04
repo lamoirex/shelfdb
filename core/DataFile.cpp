@@ -56,7 +56,7 @@ Slot DataFile::readSlot(int64_t index) {
     Slot slot{};
     file.seekg(offsetOf(index));
     file.read((char*)&slot, sizeof(Slot));
-    file.clear();  // если читали за концом файла, поток не должен "залипнуть"
+    file.clear();
     return slot;
 }
 
@@ -74,12 +74,10 @@ int64_t DataFile::allocateSlot() {
     int64_t index;
 
     if (header.freeHead != NO_SLOT) {
-        // Есть свободный слот — берём первый из списка.
         index = header.freeHead;
         Slot freeSlot = readSlot(index);
         header.freeHead = freeSlot.nextFree;
     } else {
-        // Свободных нет — новый слот в конце файла.
         index = header.slotCount;
         header.slotCount++;
     }
@@ -94,7 +92,7 @@ void DataFile::freeSlot(int64_t index) {
     empty.used = false;
     empty.prevSameAuthor = NO_SLOT;
     empty.nextSameAuthor = NO_SLOT;
-    empty.nextFree = header.freeHead;  // освобождённый слот встаёт в начало списка
+    empty.nextFree = header.freeHead;
     writeSlot(index, empty);
 
     header.freeHead = index;

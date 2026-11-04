@@ -14,8 +14,6 @@ std::string Database::authorKey(const Book& book) {
     return getText(book.author, AUTHOR_LEN);
 }
 
-// ---------- открытие и закрытие ----------
-
 bool Database::create(const std::string& basePath) {
     close();
     if (!data.create(basePath + ".dat") ||
@@ -83,13 +81,11 @@ int64_t Database::count() const {
     return data.liveCount();
 }
 
-// ---------- цепочки книг одного автора ----------
 
 void Database::linkToAuthor(int64_t slot, Slot& s) {
     // Текущая первая книга автора (или NO_SLOT, если книг автора ещё нет).
     int64_t head = authorIndex.find(authorKey(s.book));
 
-    // Новая книга встаёт перед ней.
     s.prevSameAuthor = NO_SLOT;
     s.nextSameAuthor = head;
 
@@ -99,23 +95,18 @@ void Database::linkToAuthor(int64_t slot, Slot& s) {
         data.writeSlot(head, headSlot);
     }
 
-    // Теперь цепочка автора начинается с новой книги.
     authorIndex.put(authorKey(s.book), slot);
 }
 
 void Database::unlinkFromAuthor(const Slot& s) {
-    // Было:  prev <-> slot <-> next
-    // Стало: prev <-> next
 
     if (s.prevSameAuthor != NO_SLOT) {
         Slot prev = data.readSlot(s.prevSameAuthor);
         prev.nextSameAuthor = s.nextSameAuthor;
         data.writeSlot(s.prevSameAuthor, prev);
     } else if (s.nextSameAuthor != NO_SLOT) {
-        // Удаляем первую книгу цепочки — началом становится следующая.
         authorIndex.put(authorKey(s.book), s.nextSameAuthor);
     } else {
-        // Это была единственная книга автора.
         authorIndex.remove(authorKey(s.book));
     }
 
@@ -126,16 +117,12 @@ void Database::unlinkFromAuthor(const Slot& s) {
     }
 }
 
-// ---------- добавление ----------
 
 bool Database::add(const Book& book) {
-    // 1. Проверка уникальности ключа через индекс — O(1).
     if (idIndex.find(idKey(book.id)) != NO_SLOT) return false;
 
-    // 2. Берём слот: свободный или новый в конце файла — O(1).
     int64_t slot = data.allocateSlot();
 
-    // 3. Ставим книгу в начало цепочки её автора и записываем в слот — O(1).
     Slot s{};
     s.used = true;
     s.book = book;
@@ -143,12 +130,9 @@ bool Database::add(const Book& book) {
     linkToAuthor(slot, s);
     data.writeSlot(slot, s);
 
-    // 4. Запоминаем в индексе, где лежит книга — O(1).
     idIndex.put(idKey(book.id), slot);
     return true;
 }
-
-// ---------- поиск ----------
 
 bool Database::findById(int id, Book& result) {
     int64_t slot = idIndex.find(idKey(id));
@@ -161,7 +145,6 @@ bool Database::findById(int id, Book& result) {
 std::vector<Book> Database::findByAuthor(const std::string& author) {
     std::vector<Book> result;
 
-    // Индекс даёт начало цепочки, дальше идём по ссылкам nextSameAuthor.
     int64_t slot = authorIndex.find(author);
     while (slot != NO_SLOT) {
         Slot s = data.readSlot(slot);
@@ -184,7 +167,6 @@ std::vector<Book> Database::find(Field field, const std::string& value) {
         return findByAuthor(value);
     }
 
-    // По остальным полям индекса нет — проверяем каждый слот файла.
     std::vector<Book> result;
     for (int64_t i = 0; i < data.slotCount(); i++) {
         Slot s = data.readSlot(i);
@@ -200,7 +182,6 @@ void Database::forEach(const std::function<void(const Book&)>& visit) {
     }
 }
 
-// ---------- удаление ----------
 
 void Database::removeSlot(int64_t slot) {
     Slot s = data.readSlot(slot);
@@ -220,8 +201,6 @@ bool Database::removeById(int id) {
 int Database::removeByAuthor(const std::string& author) {
     int removed = 0;
 
-    // Удаляется вся цепочка, поэтому соседей перевязывать не нужно:
-    // идём по цепочке, освобождаем слоты и в конце убираем автора из индекса.
     int64_t slot = authorIndex.find(author);
     while (slot != NO_SLOT) {
         Slot s = data.readSlot(slot);
@@ -248,8 +227,6 @@ int Database::remove(Field field, const std::string& value) {
         return removeByAuthor(value);
     }
 
-    // Проход по файлу. Удаление не сдвигает другие слоты,
-    // поэтому можно удалять прямо во время прохода.
     int removed = 0;
     for (int64_t i = 0; i < data.slotCount(); i++) {
         Slot s = data.readSlot(i);
@@ -261,7 +238,6 @@ int Database::remove(Field field, const std::string& value) {
     return removed;
 }
 
-// ---------- редактирование ----------
 
 bool Database::update(int oldId, const Book& newBook) {
     int64_t slot = idIndex.find(idKey(oldId));
@@ -269,15 +245,13 @@ bool Database::update(int oldId, const Book& newBook) {
 
     bool idChanged = (newBook.id != oldId);
     if (idChanged && idIndex.find(idKey(newBook.id)) != NO_SLOT) {
-        return false;  // новый id уже занят другой книгой
+        return false;
     }
 
-    // Книга остаётся в том же слоте, меняется только содержимое.
     Slot s = data.readSlot(slot);
     bool authorChanged = authorKey(s.book) != authorKey(newBook);
 
     if (authorChanged) {
-        // Переносим книгу из цепочки старого автора в цепочку нового.
         unlinkFromAuthor(s);
         s.book = newBook;
         linkToAuthor(slot, s);
