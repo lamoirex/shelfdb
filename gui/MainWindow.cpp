@@ -6,6 +6,7 @@
 #include "FieldValueDialog.h"
 
 #include <QApplication>
+#include <QDir>
 #include <QElapsedTimer>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -86,7 +87,7 @@ void MainWindow::buildMenu() {
 
     QMenu* service = menuBar()->addMenu("Сервис");
     needOpenActions.push_back(service->addAction("Создать backup", this, [this] { makeBackup(); }));
-    needOpenActions.push_back(service->addAction("Восстановить из backup…", this, [this] { restoreBackup(); }));
+    service->addAction("Восстановить из backup…", this, [this] { restoreBackup(); });
     service->addSeparator();
     needOpenActions.push_back(service->addAction("Экспорт в Excel (.xlsx)…", this, [this] { exportXlsx(); }));
     needOpenActions.push_back(service->addAction("Экспорт в CSV…", this, [this] { exportCsv(); }));
@@ -342,13 +343,27 @@ void MainWindow::makeBackup() {
 }
 
 void MainWindow::restoreBackup() {
-    if (!requireOpen()) return;
-    QString start = QFileInfo(QString::fromStdString(db.basePath())).absolutePath() + "/backups";
+    // Восстановить можно и открытую базу, и удалённую: тогда спросим, куда её положить.
+    QString start = db.isOpen()
+        ? QFileInfo(QString::fromStdString(db.basePath())).absolutePath() + "/backups"
+        : QString();
     QString folder = QFileDialog::getExistingDirectory(this, "Папка с backup", start);
     if (folder.isEmpty()) return;
 
+    std::string target = db.basePath();
+    if (!db.isOpen()) {
+        // Предлагаем восстановить туда, где база лежала: на уровень выше папки backups.
+        QDir backupsDir(folder);
+        backupsDir.cdUp();
+        if (backupsDir.dirName() == "backups") backupsDir.cdUp();
+        QString file = QFileDialog::getSaveFileName(this, "Куда восстановить базу",
+                                                    backupsDir.filePath("books.dat"), "База ShelfDB (*.dat)");
+        if (file.isEmpty()) return;
+        target = basePathOf(file);
+    }
+
     bool ok = false;
-    timed("Восстановление", [&] { ok = Backup::restore(db, folder.toStdString()); });
+    timed("Восстановление", [&] { ok = Backup::restoreTo(db, folder.toStdString(), target); });
 
     if (!ok) {
         QMessageBox::critical(this, "Ошибка", "В этой папке нет корректной копии базы.");
