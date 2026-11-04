@@ -16,3 +16,7 @@ enable_testing()
 add_executable(book_test tests/book_test.cpp)
 target_link_libraries(book_test PRIVATE shelf_core)
 add_test(NAME book_test COMMAND book_test)
+
+add_executable(datafile_test tests/datafile_test.cpp)
+target_link_libraries(datafile_test PRIVATE shelf_core)
+add_test(NAME datafile_test COMMAND datafile_test)
