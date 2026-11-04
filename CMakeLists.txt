@@ -9,6 +9,7 @@ add_library(shelf_core STATIC
 		core/DataFile.cpp
 		core/HashIndex.cpp
 		core/Database.cpp
+		core/BookField.cpp
 )
 target_include_directories(shelf_core PUBLIC core)
 
