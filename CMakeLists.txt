@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_library(shelf_core STATIC
         core/Book.cpp
 		core/DataFile.cpp
+		core/HashIndex.cpp
 )
 target_include_directories(shelf_core PUBLIC core)
 
