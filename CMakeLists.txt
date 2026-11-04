@@ -35,3 +35,7 @@ add_test(NAME database_test COMMAND database_test)
 add_executable(author_test tests/author_test.cpp)
 target_link_libraries(author_test PRIVATE shelf_core)
 add_test(NAME author_test COMMAND author_test)
+
+add_executable(lifecycle_test tests/lifecycle_test.cpp)
+target_link_libraries(lifecycle_test PRIVATE shelf_core)
+add_test(NAME lifecycle_test COMMAND lifecycle_test)
