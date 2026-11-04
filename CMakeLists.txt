@@ -11,6 +11,7 @@ add_library(shelf_core STATIC
 		core/Database.cpp
 		core/BookField.cpp
 		core/Backup.cpp
+		core/XlsxWriter.cpp
 )
 target_include_directories(shelf_core PUBLIC core)
 
