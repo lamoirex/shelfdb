@@ -1,5 +1,7 @@
 #include "Database.h"
 
+#include <cstdio>
+
 namespace {
 const int ID_KEY_LEN = 12;  // "-2147483648" — самый длинный int, 11 символов
 }
@@ -22,6 +24,7 @@ bool Database::create(const std::string& basePath) {
         close();
         return false;
     }
+    path = basePath;
     return true;
 }
 
@@ -33,6 +36,7 @@ bool Database::open(const std::string& basePath) {
         close();
         return false;
     }
+    path = basePath;
     return true;
 }
 
@@ -40,6 +44,35 @@ void Database::close() {
     data.close();
     idIndex.close();
     authorIndex.close();
+    path.clear();
+}
+
+void Database::save() {
+    data.flush();
+    idIndex.flush();
+    authorIndex.flush();
+}
+
+bool Database::clear() {
+    if (!isOpen()) return false;
+    std::string current = path;
+    return create(current);
+}
+
+bool Database::destroy() {
+    if (!isOpen()) return false;
+    std::string current = path;
+    close();
+
+    bool ok = true;
+    for (const std::string& file : filesOf(current)) {
+        if (std::remove(file.c_str()) != 0) ok = false;
+    }
+    return ok;
+}
+
+std::vector<std::string> Database::filesOf(const std::string& basePath) {
+    return {basePath + ".dat", basePath + ".pidx", basePath + ".sidx"};
 }
 
 bool Database::isOpen() const {

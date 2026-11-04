@@ -31,6 +31,22 @@ public:
     void close();
     bool isOpen() const;
 
+    // Сохраняет изменения на диск. Все операции и так пишут прямо в файлы,
+    // поэтому сохранение — это сброс буферов, чтобы ничего не потерялось при сбое.
+    void save();
+
+    // Удаляет все книги: файлы пересоздаются пустыми.
+    bool clear();
+
+    // Закрывает базу и удаляет её файлы с диска.
+    bool destroy();
+
+    // Путь без расширения, с которым база открыта ("" если закрыта).
+    std::string basePath() const { return path; }
+
+    // Все файлы базы с таким путём: .dat, .pidx, .sidx.
+    static std::vector<std::string> filesOf(const std::string& basePath);
+
     // Добавляет книгу. false, если книга с таким id уже есть. O(1).
     bool add(const Book& book);
 
@@ -76,6 +92,7 @@ private:
     static std::string idKey(int id);
     static std::string authorKey(const Book& book);
 
+    std::string path;
     DataFile data;
     HashIndex idIndex;
     HashIndex authorIndex;
