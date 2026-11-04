@@ -26,3 +26,7 @@ add_test(NAME datafile_test COMMAND datafile_test)
 add_executable(hashindex_test tests/hashindex_test.cpp)
 target_link_libraries(hashindex_test PRIVATE shelf_core)
 add_test(NAME hashindex_test COMMAND hashindex_test)
+
+add_executable(database_test tests/database_test.cpp)
+target_link_libraries(database_test PRIVATE shelf_core)
+add_test(NAME database_test COMMAND database_test)
