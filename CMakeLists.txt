@@ -42,3 +42,7 @@ add_test(NAME author_test COMMAND author_test)
 add_executable(lifecycle_test tests/lifecycle_test.cpp)
 target_link_libraries(lifecycle_test PRIVATE shelf_core)
 add_test(NAME lifecycle_test COMMAND lifecycle_test)
+
+add_executable(services_test tests/services_test.cpp)
+target_link_libraries(services_test PRIVATE shelf_core)
+add_test(NAME services_test COMMAND services_test)
