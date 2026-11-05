@@ -21,8 +21,6 @@
 
 namespace {
 
-// Больше строк на экран не выводим: таблица на миллион строк будет тормозить.
-// Сама база при этом может быть любого размера.
 const int MAX_ROWS_ON_SCREEN = 10000;
 
 // Путь без расширения: "/a/books.dat" -> "/a/books".
@@ -74,7 +72,6 @@ MainWindow::~MainWindow() {
     db.close();
 }
 
-// ---------- построение интерфейса ----------
 
 void MainWindow::buildMenu() {
     QMenu* base = menuBar()->addMenu("База");
@@ -124,7 +121,6 @@ void MainWindow::updateState() {
     }
 }
 
-// ---------- вспомогательное ----------
 
 void MainWindow::timed(const QString& name, const std::function<void()>& action) {
     QElapsedTimer timer;
@@ -192,7 +188,6 @@ void MainWindow::fillTable(const std::vector<Book>& books) {
     table->setUpdatesEnabled(true);
 }
 
-// ---------- База ----------
 
 void MainWindow::createDatabase() {
     QString file = QFileDialog::getSaveFileName(this, "Новая база", "books.dat", "База ShelfDB (*.dat)");
@@ -248,7 +243,6 @@ void MainWindow::deleteDatabase() {
     updateState();
 }
 
-// ---------- Записи ----------
 
 void MainWindow::addBook() {
     if (!requireOpen()) return;
@@ -274,7 +268,6 @@ void MainWindow::editBook() {
         return;
     }
 
-    // Берём книгу из файла, а не из таблицы на экране.
     Book current;
     if (!db.findById(id, current)) {
         QMessageBox::warning(this, "Ошибка", "Книга уже удалена.");
@@ -328,7 +321,6 @@ void MainWindow::showAll() {
     timed("Чтение всех книг", [this] { reloadTable(); });
 }
 
-// ---------- Сервис ----------
 
 void MainWindow::makeBackup() {
     if (!requireOpen()) return;
@@ -343,7 +335,6 @@ void MainWindow::makeBackup() {
 }
 
 void MainWindow::restoreBackup() {
-    // Восстановить можно и открытую базу, и удалённую: тогда спросим, куда её положить.
     QString start = db.isOpen()
         ? QFileInfo(QString::fromStdString(db.basePath())).absolutePath() + "/backups"
         : QString();
@@ -352,7 +343,6 @@ void MainWindow::restoreBackup() {
 
     std::string target = db.basePath();
     if (!db.isOpen()) {
-        // Предлагаем восстановить туда, где база лежала: на уровень выше папки backups.
         QDir backupsDir(folder);
         backupsDir.cdUp();
         if (backupsDir.dirName() == "backups") backupsDir.cdUp();
@@ -405,7 +395,6 @@ void MainWindow::generateBooks() {
     const char* words[] = {"Война", "Мир", "Ночь", "Сад", "Дом", "Река", "Город", "Время", "Море", "Сон"};
     std::mt19937 rng(std::random_device{}());
 
-    // Новые id идут после самого большого существующего, чтобы не было дубликатов.
     int nextId = 1;
     db.forEach([&](const Book& b) { if (b.id >= nextId) nextId = b.id + 1; });
 

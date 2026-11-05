@@ -7,7 +7,6 @@
 #include <QLabel>
 #include <QLineEdit>
 
-// Окно "поле + значение": используется для поиска и для удаления.
 class FieldValueDialog : public QDialog {
 public:
     FieldValueDialog(QWidget* parent, const QString& title, const QString& okText);

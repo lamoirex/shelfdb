@@ -49,7 +49,6 @@ bool restore(Database& db, const std::string& backupFolder) {
 }
 
 bool restoreTo(Database& db, const std::string& backupFolder, const std::string& basePath) {
-    // Ищем в папке копии файл .dat — по нему узнаём имя базы в копии.
     std::error_code error;
     fs::path backupBase;
     for (const auto& entry : fs::directory_iterator(backupFolder, error)) {
@@ -65,7 +64,6 @@ bool restoreTo(Database& db, const std::string& backupFolder, const std::string&
     if (!check.open(backupBase.string())) return false;
     check.close();
 
-    // Закрываем базу, кладём на её место файлы копии и открываем.
     db.close();
     std::vector<std::string> from = Database::filesOf(backupBase.string());
     std::vector<std::string> to = Database::filesOf(basePath);
